@@ -1,6 +1,6 @@
 specVersion: 0.0.2
-description: Uniswap is a decentralized protocol for automated token exchange on Ethereum.
-repository: https://github.com/Uniswap/uniswap-v2-subgraph
+description: Ubeswap is a decentralized protocol for automated token exchange on Celo.
+repository: https://github.com/Ubeswap/ubeswap-subgraph
 schema:
   file: ./schema.graphql
 dataSources:
