@@ -1,8 +1,8 @@
-import { PairHourData } from './../types/schema'
 /* eslint-disable prefer-const */
-import { BigInt, BigDecimal, EthereumEvent } from '@graphprotocol/graph-ts'
-import { Pair, Bundle, Token, UbeswapFactory, UbeswapDayData, PairDayData, TokenDayData } from '../types/schema'
-import { ONE_BI, ZERO_BD, ZERO_BI, FACTORY_ADDRESS } from './helpers'
+import { BigDecimal, BigInt, EthereumEvent } from '@graphprotocol/graph-ts'
+import { Bundle, Pair, PairDayData, Token, TokenDayData, UbeswapDayData, UbeswapFactory } from '../types/schema'
+import { PairHourData } from './../types/schema'
+import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from './helpers'
 
 export function updateUbeswapDayData(event: EthereumEvent): UbeswapDayData {
   let ubeswap = UbeswapFactory.load(FACTORY_ADDRESS)
