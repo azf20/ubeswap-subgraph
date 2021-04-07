@@ -2,7 +2,7 @@
 import { BigDecimal, BigInt, EthereumEvent } from '@graphprotocol/graph-ts'
 import { Bundle, Pair, PairDayData, Token, TokenDayData, UbeswapDayData, UbeswapFactory } from '../types/schema'
 import { PairHourData } from './../types/schema'
-import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from './helpers'
+import { FACTORY_ADDRESS, ONE_BD, ONE_BI, ZERO_BD, ZERO_BI } from './helpers'
 
 export function updateUbeswapDayData(event: EthereumEvent): UbeswapDayData {
   let ubeswap = UbeswapFactory.load(FACTORY_ADDRESS)
@@ -14,14 +14,14 @@ export function updateUbeswapDayData(event: EthereumEvent): UbeswapDayData {
     ubeswapDayData = new UbeswapDayData(dayID.toString())
     ubeswapDayData.date = dayStartTimestamp
     ubeswapDayData.dailyVolumeUSD = ZERO_BD
-    ubeswapDayData.dailyVolumeETH = ZERO_BD
+    ubeswapDayData.dailyVolumeCELO = ZERO_BD
     ubeswapDayData.totalVolumeUSD = ZERO_BD
-    ubeswapDayData.totalVolumeETH = ZERO_BD
+    ubeswapDayData.totalVolumeCELO = ZERO_BD
     ubeswapDayData.dailyVolumeUntracked = ZERO_BD
   }
 
   ubeswapDayData.totalLiquidityUSD = ubeswap.totalLiquidityUSD
-  ubeswapDayData.totalLiquidityETH = ubeswap.totalLiquidityETH
+  ubeswapDayData.totalLiquidityCELO = ubeswap.totalLiquidityCELO
   ubeswapDayData.txCount = ubeswap.txCount
   ubeswapDayData.save()
 
@@ -104,17 +104,21 @@ export function updateTokenDayData(token: Token, event: EthereumEvent): TokenDay
     tokenDayData = new TokenDayData(tokenDayID)
     tokenDayData.date = dayStartTimestamp
     tokenDayData.token = token.id
-    tokenDayData.priceUSD = token.derivedETH.times(bundle.ethPrice)
+    tokenDayData.priceUSD = token.derivedCUSD.times(ONE_BD)
     tokenDayData.dailyVolumeToken = ZERO_BD
-    tokenDayData.dailyVolumeETH = ZERO_BD
+    tokenDayData.dailyVolumeCELO = ZERO_BD
     tokenDayData.dailyVolumeUSD = ZERO_BD
     tokenDayData.dailyTxns = ZERO_BI
     tokenDayData.totalLiquidityUSD = ZERO_BD
   }
-  tokenDayData.priceUSD = token.derivedETH.times(bundle.ethPrice)
+  tokenDayData.priceUSD = token.derivedCUSD.times(ONE_BD)
   tokenDayData.totalLiquidityToken = token.totalLiquidity
-  tokenDayData.totalLiquidityETH = token.totalLiquidity.times(token.derivedETH as BigDecimal)
-  tokenDayData.totalLiquidityUSD = tokenDayData.totalLiquidityETH.times(bundle.ethPrice)
+  tokenDayData.totalLiquidityUSD = token.totalLiquidity.times(token.derivedCUSD as BigDecimal)
+  if (bundle.celoPrice.notEqual(ZERO_BD)) {
+    tokenDayData.totalLiquidityCELO = tokenDayData.totalLiquidityUSD.div(bundle.celoPrice)
+  } else {
+    tokenDayData.totalLiquidityCELO = ZERO_BD
+  }
   tokenDayData.dailyTxns = tokenDayData.dailyTxns.plus(ONE_BI)
   tokenDayData.save()
 

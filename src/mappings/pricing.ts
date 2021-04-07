@@ -1,17 +1,20 @@
 /* eslint-disable prefer-const */
 import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts/index'
-import { Bundle, Pair, Token } from '../types/schema'
+import { Pair, Token } from '../types/schema'
 import { ADDRESS_ZERO, factoryContract, ONE_BD, ZERO_BD } from './helpers'
 
-const CELO_ADDRESS = '0x471EcE3750Da237f93B8E339c536989b8978a438'
-const CUSD_ADDRESS = '0x765DE816845861e75A25fCA122bb6898B8B1282a'
-const CUSD_CELO_PAIR = '0x1E593F1FE7B61c53874B54EC0c59FD0d5eb8621e' 
+export const CELO_ADDRESS = '0x471ece3750da237f93b8e339c536989b8978a438'
+const CUSD_ADDRESS = '0x765de816845861e75a25fca122bb6898b8b1282a'
+const CUSD_CELO_PAIR = '0x1e593f1fe7b61c53874b54ec0c59fd0d5eb8621e' // Created at block 5272605
 
 
-export function getEthPriceInUSD(): BigDecimal {
+export function getCeloPriceInUSD(): BigDecimal {
   // fetch celo prices for each stablecoin
   let cusdPair = Pair.load(CUSD_CELO_PAIR) // cusd is token1
-  return cusdPair.token1Price || ZERO_BD
+  if (!cusdPair) {
+    return ZERO_BD
+  }
+  return cusdPair.token1Price.times(ONE_BD)
 }
 
 // token where amounts should contribute to tracked volume and liquidity
@@ -25,14 +28,14 @@ let WHITELIST: string[] = [
 let MINIMUM_USD_THRESHOLD_NEW_PAIRS = BigDecimal.fromString('400000')
 
 // minimum liquidity for price to get tracked
-let MINIMUM_LIQUIDITY_THRESHOLD_ETH = BigDecimal.fromString('2')
+let MINIMUM_LIQUIDITY_THRESHOLD_CELO = BigDecimal.fromString('2')
 
 /**
  * Search through graph to find derived Eth per token.
- * @todo update to be derived ETH (add stablecoin estimates)
+ * @todo update to be derived CELO (add stablecoin estimates)
  **/
-export function findEthPerToken(token: Token): BigDecimal {
-  if (token.id == CELO_ADDRESS) {
+export function findUsdPerToken(token: Token): BigDecimal {
+  if (token.id == CUSD_ADDRESS) {
     return ONE_BD
   }
   // loop through whitelist and check if paired with any
@@ -40,13 +43,13 @@ export function findEthPerToken(token: Token): BigDecimal {
     let pairAddress = factoryContract.getPair(Address.fromString(token.id), Address.fromString(WHITELIST[i]))
     if (pairAddress.toHexString() != ADDRESS_ZERO) {
       let pair = Pair.load(pairAddress.toHexString())
-      if (pair.token0 == token.id && pair.reserveETH.gt(MINIMUM_LIQUIDITY_THRESHOLD_ETH)) {
+      if (pair.token0 == token.id && pair.reserveCELO.gt(MINIMUM_LIQUIDITY_THRESHOLD_CELO)) {
         let token1 = Token.load(pair.token1)
-        return pair.token1Price.times(token1.derivedETH as BigDecimal) // return token1 per our token * Eth per token 1
+        return pair.token1Price.times(token1.derivedCUSD as BigDecimal) // return token1 per our token * Eth per token 1
       }
-      if (pair.token1 == token.id && pair.reserveETH.gt(MINIMUM_LIQUIDITY_THRESHOLD_ETH)) {
+      if (pair.token1 == token.id && pair.reserveCELO.gt(MINIMUM_LIQUIDITY_THRESHOLD_CELO)) {
         let token0 = Token.load(pair.token0)
-        return pair.token0Price.times(token0.derivedETH as BigDecimal) // return token0 per our token * ETH per token 0
+        return pair.token0Price.times(token0.derivedCUSD as BigDecimal) // return token0 per our token * CELO per token 0
       }
     }
   }
@@ -66,14 +69,13 @@ export function getTrackedVolumeUSD(
   token1: Token,
   pair: Pair
 ): BigDecimal {
-  let bundle = Bundle.load('1')
-  let price0 = token0.derivedETH.times(bundle.ethPrice)
-  let price1 = token1.derivedETH.times(bundle.ethPrice)
+  let price0 = token0.derivedCUSD.times(ONE_BD)
+  let price1 = token1.derivedCUSD.times(ONE_BD)
 
   // if less than 5 LPs, require high minimum reserve amount amount or return 0
   if (pair.liquidityProviderCount.lt(BigInt.fromI32(5))) {
     let reserve0USD = pair.reserve0.times(price0)
-    let reserve1USD = pair.reserve1.times(price1)
+    let reserve1USD = pair.reserve1.times(price1 || ZERO_BD)
     if (WHITELIST.includes(token0.id) && WHITELIST.includes(token1.id)) {
       if (reserve0USD.plus(reserve1USD).lt(MINIMUM_USD_THRESHOLD_NEW_PAIRS)) {
         return ZERO_BD
@@ -125,9 +127,8 @@ export function getTrackedLiquidityUSD(
   tokenAmount1: BigDecimal,
   token1: Token
 ): BigDecimal {
-  let bundle = Bundle.load('1')
-  let price0 = token0.derivedETH.times(bundle.ethPrice)
-  let price1 = token1.derivedETH.times(bundle.ethPrice)
+  let price0 = token0.derivedCUSD.times(ONE_BD)
+  let price1 = token1.derivedCUSD.times(ONE_BD)
 
   // both are whitelist tokens, take average of both amounts
   if (WHITELIST.includes(token0.id) && WHITELIST.includes(token1.id)) {

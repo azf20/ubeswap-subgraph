@@ -34,7 +34,7 @@ import {
 
   ZERO_BD
 } from './helpers'
-import { findEthPerToken, getEthPriceInUSD, getTrackedLiquidityUSD, getTrackedVolumeUSD } from './pricing'
+import { findUsdPerToken, getCeloPriceInUSD, getTrackedLiquidityUSD, getTrackedVolumeUSD } from './pricing'
 
 function isCompleteMint(mintId: string): boolean {
   return MintEvent.load(mintId).sender !== null // sufficient checks
@@ -105,7 +105,7 @@ export function handleTransfer(event: Transfer): void {
     }
   }
 
-  // case where direct send first on ETH withdrawls
+  // case where direct send first on CELO withdrawls
   if (event.params.to.toHexString() == pair.id) {
     let burns = transaction.burns
     let burn = new BurnEvent(
@@ -228,7 +228,7 @@ export function handleSync(event: Sync): void {
   let ubeswap = UbeswapFactory.load(FACTORY_ADDRESS)
 
   // reset factory liquidity by subtracting onluy tarcked liquidity
-  ubeswap.totalLiquidityETH = ubeswap.totalLiquidityETH.minus(pair.trackedReserveETH as BigDecimal)
+  ubeswap.totalLiquidityUSD = ubeswap.totalLiquidityUSD.minus(pair.trackedReserveUSD as BigDecimal)
 
   // reset token total liquidity amounts
   token0.totalLiquidity = token0.totalLiquidity.minus(pair.reserve0)
@@ -244,36 +244,44 @@ export function handleSync(event: Sync): void {
 
   pair.save()
 
-  // update ETH price now that reserves could have changed
+  // update CELO price now that reserves could have changed
   let bundle = Bundle.load('1')
-  bundle.ethPrice = getEthPriceInUSD()
+  bundle.celoPrice = getCeloPriceInUSD()
   bundle.save()
 
-  token0.derivedETH = findEthPerToken(token0 as Token)
-  token1.derivedETH = findEthPerToken(token1 as Token)
+  token0.derivedCUSD = findUsdPerToken(token0 as Token)
+  token1.derivedCUSD = findUsdPerToken(token1 as Token)
   token0.save()
   token1.save()
 
   // get tracked liquidity - will be 0 if neither is in whitelist
-  let trackedLiquidityETH: BigDecimal
-  if (bundle.ethPrice.notEqual(ZERO_BD)) {
-    trackedLiquidityETH = getTrackedLiquidityUSD(pair.reserve0, token0 as Token, pair.reserve1, token1 as Token).div(
-      bundle.ethPrice
+  let trackedLiquidityUSD: BigDecimal
+  if (bundle.celoPrice.notEqual(ZERO_BD)) {
+    trackedLiquidityUSD = getTrackedLiquidityUSD(pair.reserve0, token0 as Token, pair.reserve1, token1 as Token).div(
+      bundle.celoPrice
     )
   } else {
-    trackedLiquidityETH = ZERO_BD
+    trackedLiquidityUSD = ZERO_BD
   }
 
   // use derived amounts within pair
-  pair.trackedReserveETH = trackedLiquidityETH
-  pair.reserveETH = pair.reserve0
-    .times(token0.derivedETH as BigDecimal)
-    .plus(pair.reserve1.times(token1.derivedETH as BigDecimal))
-  pair.reserveUSD = pair.reserveETH.times(bundle.ethPrice)
+  pair.trackedReserveUSD = trackedLiquidityUSD
+  pair.reserveUSD = pair.reserve0
+    .times(token0.derivedCUSD as BigDecimal)
+    .plus(pair.reserve1.times(token1.derivedCUSD as BigDecimal))
+  if (bundle.celoPrice.notEqual(ZERO_BD)) {
+    pair.reserveCELO = pair.reserveUSD.div(bundle.celoPrice)
+  } else {
+    pair.reserveCELO = ZERO_BD
+  }
 
   // use tracked amounts globally
-  ubeswap.totalLiquidityETH = ubeswap.totalLiquidityETH.plus(trackedLiquidityETH)
-  ubeswap.totalLiquidityUSD = ubeswap.totalLiquidityETH.times(bundle.ethPrice)
+  ubeswap.totalLiquidityUSD = ubeswap.totalLiquidityUSD.plus(trackedLiquidityUSD)
+  if (bundle.celoPrice.notEqual(ZERO_BD)) {
+    ubeswap.totalLiquidityCELO = ubeswap.totalLiquidityUSD.div(bundle.celoPrice)
+  } else {
+    ubeswap.totalLiquidityCELO = ZERO_BD
+  }
 
   // now correctly set liquidity amounts for each token
   token0.totalLiquidity = token0.totalLiquidity.plus(pair.reserve0)
@@ -305,12 +313,10 @@ export function handleMint(event: Mint): void {
   token0.txCount = token0.txCount.plus(ONE_BI)
   token1.txCount = token1.txCount.plus(ONE_BI)
 
-  // get new amounts of USD and ETH for tracking
-  let bundle = Bundle.load('1')
-  let amountTotalUSD = token1.derivedETH
+  // get new amounts of USD and CELO for tracking
+  let amountTotalUSD = token1.derivedCUSD
     .times(token1Amount)
-    .plus(token0.derivedETH.times(token0Amount))
-    .times(bundle.ethPrice)
+    .plus(token0.derivedCUSD.times(token0Amount))
 
   // update txn counts
   pair.txCount = pair.txCount.plus(ONE_BI)
@@ -365,12 +371,12 @@ export function handleBurn(event: Burn): void {
   token0.txCount = token0.txCount.plus(ONE_BI)
   token1.txCount = token1.txCount.plus(ONE_BI)
 
-  // get new amounts of USD and ETH for tracking
+  // get new amounts of USD and CELO for tracking
   let bundle = Bundle.load('1')
-  let amountTotalUSD = token1.derivedETH
+  let amountTotalUSD = token1.derivedCUSD
     .times(token1Amount)
-    .plus(token0.derivedETH.times(token0Amount))
-    .times(bundle.ethPrice)
+    .plus(token0.derivedCUSD.times(token0Amount))
+    .times(bundle.celoPrice)
 
   // update txn counts
   ubeswap.txCount = ubeswap.txCount.plus(ONE_BI)
@@ -416,35 +422,34 @@ export function handleSwap(event: Swap): void {
   let amount0Total = amount0Out.plus(amount0In)
   let amount1Total = amount1Out.plus(amount1In)
 
-  // ETH/USD prices
+  // CELO/USD prices
   let bundle = Bundle.load('1')
 
-  // get total amounts of derived USD and ETH for tracking
-  let derivedAmountETH = token1.derivedETH
+  // get total amounts of derived USD and CELO for tracking
+  let derivedAmountCUSD = token1.derivedCUSD
     .times(amount1Total)
-    .plus(token0.derivedETH.times(amount0Total))
+    .plus(token0.derivedCUSD.times(amount0Total))
     .div(BigDecimal.fromString('2'))
-  let derivedAmountUSD = derivedAmountETH.times(bundle.ethPrice)
 
   // only accounts for volume through white listed tokens
   let trackedAmountUSD = getTrackedVolumeUSD(amount0Total, token0 as Token, amount1Total, token1 as Token, pair as Pair)
 
-  let trackedAmountETH: BigDecimal
-  if (bundle.ethPrice.equals(ZERO_BD)) {
-    trackedAmountETH = ZERO_BD
+  let trackedAmountCELO: BigDecimal
+  if (bundle.celoPrice.equals(ZERO_BD)) {
+    trackedAmountCELO = ZERO_BD
   } else {
-    trackedAmountETH = trackedAmountUSD.div(bundle.ethPrice)
+    trackedAmountCELO = trackedAmountUSD.div(bundle.celoPrice)
   }
 
   // update token0 global volume and token liquidity stats
   token0.tradeVolume = token0.tradeVolume.plus(amount0In.plus(amount0Out))
   token0.tradeVolumeUSD = token0.tradeVolumeUSD.plus(trackedAmountUSD)
-  token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(derivedAmountUSD)
+  token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(derivedAmountCUSD)
 
   // update token1 global volume and token liquidity stats
   token1.tradeVolume = token1.tradeVolume.plus(amount1In.plus(amount1Out))
   token1.tradeVolumeUSD = token1.tradeVolumeUSD.plus(trackedAmountUSD)
-  token1.untrackedVolumeUSD = token1.untrackedVolumeUSD.plus(derivedAmountUSD)
+  token1.untrackedVolumeUSD = token1.untrackedVolumeUSD.plus(derivedAmountCUSD)
 
   // update txn counts
   token0.txCount = token0.txCount.plus(ONE_BI)
@@ -454,15 +459,15 @@ export function handleSwap(event: Swap): void {
   pair.volumeUSD = pair.volumeUSD.plus(trackedAmountUSD)
   pair.volumeToken0 = pair.volumeToken0.plus(amount0Total)
   pair.volumeToken1 = pair.volumeToken1.plus(amount1Total)
-  pair.untrackedVolumeUSD = pair.untrackedVolumeUSD.plus(derivedAmountUSD)
+  pair.untrackedVolumeUSD = pair.untrackedVolumeUSD.plus(derivedAmountCUSD)
   pair.txCount = pair.txCount.plus(ONE_BI)
   pair.save()
 
   // update global values, only used tracked amounts for volume
   let ubeswap = UbeswapFactory.load(FACTORY_ADDRESS)
   ubeswap.totalVolumeUSD = ubeswap.totalVolumeUSD.plus(trackedAmountUSD)
-  ubeswap.totalVolumeETH = ubeswap.totalVolumeETH.plus(trackedAmountETH)
-  ubeswap.untrackedVolumeUSD = ubeswap.untrackedVolumeUSD.plus(derivedAmountUSD)
+  ubeswap.totalVolumeCELO = ubeswap.totalVolumeCELO.plus(trackedAmountCELO)
+  ubeswap.untrackedVolumeUSD = ubeswap.untrackedVolumeUSD.plus(derivedAmountCUSD)
   ubeswap.txCount = ubeswap.txCount.plus(ONE_BI)
 
   // save entities
@@ -502,7 +507,7 @@ export function handleSwap(event: Swap): void {
   swap.from = event.transaction.from
   swap.logIndex = event.logIndex
   // use the tracked amount if we have it
-  swap.amountUSD = trackedAmountUSD === ZERO_BD ? derivedAmountUSD : trackedAmountUSD
+  swap.amountUSD = trackedAmountUSD === ZERO_BD ? derivedAmountCUSD : trackedAmountUSD
   swap.save()
 
   // update the transaction
@@ -522,8 +527,8 @@ export function handleSwap(event: Swap): void {
 
   // swap specific updating
   ubeswapDayData.dailyVolumeUSD = ubeswapDayData.dailyVolumeUSD.plus(trackedAmountUSD)
-  ubeswapDayData.dailyVolumeETH = ubeswapDayData.dailyVolumeETH.plus(trackedAmountETH)
-  ubeswapDayData.dailyVolumeUntracked = ubeswapDayData.dailyVolumeUntracked.plus(derivedAmountUSD)
+  ubeswapDayData.dailyVolumeCELO = ubeswapDayData.dailyVolumeCELO.plus(trackedAmountCELO)
+  ubeswapDayData.dailyVolumeUntracked = ubeswapDayData.dailyVolumeUntracked.plus(derivedAmountCUSD)
   ubeswapDayData.save()
 
   // swap specific updating for pair
@@ -540,17 +545,17 @@ export function handleSwap(event: Swap): void {
 
   // swap specific updating for token0
   token0DayData.dailyVolumeToken = token0DayData.dailyVolumeToken.plus(amount0Total)
-  token0DayData.dailyVolumeETH = token0DayData.dailyVolumeETH.plus(amount0Total.times(token1.derivedETH as BigDecimal))
-  token0DayData.dailyVolumeUSD = token0DayData.dailyVolumeUSD.plus(
-    amount0Total.times(token0.derivedETH as BigDecimal).times(bundle.ethPrice)
+  token0DayData.dailyVolumeUSD = token0DayData.dailyVolumeUSD.plus(amount0Total.times(token1.derivedCUSD as BigDecimal))
+  token0DayData.dailyVolumeCELO = token0DayData.dailyVolumeCELO.plus(
+    amount0Total.times(token0.derivedCUSD as BigDecimal).times(bundle.celoPrice)
   )
   token0DayData.save()
 
   // swap specific updating
   token1DayData.dailyVolumeToken = token1DayData.dailyVolumeToken.plus(amount1Total)
-  token1DayData.dailyVolumeETH = token1DayData.dailyVolumeETH.plus(amount1Total.times(token1.derivedETH as BigDecimal))
+  token1DayData.dailyVolumeUSD = token1DayData.dailyVolumeUSD.plus(amount1Total.times(token1.derivedCUSD as BigDecimal))
   token1DayData.dailyVolumeUSD = token1DayData.dailyVolumeUSD.plus(
-    amount1Total.times(token1.derivedETH as BigDecimal).times(bundle.ethPrice)
+    amount1Total.times(token1.derivedCUSD as BigDecimal).times(bundle.celoPrice)
   )
   token1DayData.save()
 }
