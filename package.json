@@ -1,5 +1,5 @@
 {
-  "name": "ubeswap-subgraph",
+  "name": "@ubeswap/subgraph",
   "version": "1.0.0",
   "repository": "https://github.com/ubeswap/ubeswap-subgraph",
   "license": "GPL-3.0-or-later",
@@ -19,5 +19,8 @@
     "eslint-config-prettier": "^6.1.0",
     "prettier": "^1.18.2",
     "typescript": "^3.5.2"
-  }
+  },
+  "files": [
+    "schema.graphql"
+  ]
 }
