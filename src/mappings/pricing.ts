@@ -3,10 +3,12 @@ import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts/index'
 import { Pair, Token } from '../types/schema'
 import { ADDRESS_ZERO, factoryContract, ONE_BD, ZERO_BD } from './helpers'
 
-export const CELO_ADDRESS = '0x471ece3750da237f93b8e339c536989b8978a438'
-const CUSD_ADDRESS = '0x765de816845861e75a25fca122bb6898b8b1282a'
 const CUSD_CELO_PAIR = '0x1e593f1fe7b61c53874b54ec0c59fd0d5eb8621e' // Created at block 5272605
-
+export const CELO_ADDRESS = '0x471ece3750da237f93b8e339c536989b8978a438'
+// moola celo dollar
+const MCUSD_ADDRESS = '0x64defa3544c695db8c535d289d843a189aa26b98'
+const CUSD_ADDRESS = '0x765de816845861e75a25fca122bb6898b8b1282a'
+const CEUR_ADDRESS = '0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73'
 
 export function getCeloPriceInUSD(): BigDecimal {
   // fetch celo prices for each stablecoin
@@ -18,24 +20,24 @@ export function getCeloPriceInUSD(): BigDecimal {
 }
 
 // token where amounts should contribute to tracked volume and liquidity
-let WHITELIST: string[] = [
-  CELO_ADDRESS, // CELO
-  CUSD_ADDRESS, // CUSD
-]
-
+let WHITELIST: string[] = [CELO_ADDRESS, CUSD_ADDRESS, MCUSD_ADDRESS, CEUR_ADDRESS]
 
 // minimum liquidity required to count towards tracked volume for pairs with small # of Lps
-let MINIMUM_USD_THRESHOLD_NEW_PAIRS = BigDecimal.fromString('400000')
+let MINIMUM_USD_THRESHOLD_NEW_PAIRS = BigDecimal.fromString('10000')
 
 // minimum liquidity for price to get tracked
-let MINIMUM_LIQUIDITY_THRESHOLD_CELO = BigDecimal.fromString('2')
+let MINIMUM_LIQUIDITY_THRESHOLD_CUSD = BigDecimal.fromString('10000')
 
 /**
  * Search through graph to find derived Eth per token.
  * @todo update to be derived CELO (add stablecoin estimates)
  **/
 export function findUsdPerToken(token: Token): BigDecimal {
-  if (token.id == CUSD_ADDRESS) {
+  if (
+    token.id == CUSD_ADDRESS ||
+    // hard-code moola to $1
+    token.id === MCUSD_ADDRESS
+  ) {
     return ONE_BD
   }
   // loop through whitelist and check if paired with any
@@ -43,11 +45,11 @@ export function findUsdPerToken(token: Token): BigDecimal {
     let pairAddress = factoryContract.getPair(Address.fromString(token.id), Address.fromString(WHITELIST[i]))
     if (pairAddress.toHexString() != ADDRESS_ZERO) {
       let pair = Pair.load(pairAddress.toHexString())
-      if (pair.token0 == token.id && pair.reserveCELO.gt(MINIMUM_LIQUIDITY_THRESHOLD_CELO)) {
+      if (pair.token0 == token.id && pair.reserveUSD.gt(MINIMUM_LIQUIDITY_THRESHOLD_CUSD)) {
         let token1 = Token.load(pair.token1)
         return pair.token1Price.times(token1.derivedCUSD as BigDecimal) // return token1 per our token * Eth per token 1
       }
-      if (pair.token1 == token.id && pair.reserveCELO.gt(MINIMUM_LIQUIDITY_THRESHOLD_CELO)) {
+      if (pair.token1 == token.id && pair.reserveUSD.gt(MINIMUM_LIQUIDITY_THRESHOLD_CUSD)) {
         let token0 = Token.load(pair.token0)
         return pair.token0Price.times(token0.derivedCUSD as BigDecimal) // return token0 per our token * CELO per token 0
       }
