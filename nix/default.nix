@@ -5,7 +5,7 @@ with pkgs;
 {
   shell = mkShell {
     nativeBuildInputs = [ yarn nodejs ]
-      ++ (lib.optionals stdenv.isLinux [ pkg-config libsecret ])
+      ++ (lib.optionals stdenv.isLinux [ pkg-config gnome3.libsecret ])
       ++ (lib.optionals stdenv.isDarwin [
         darwin.apple_sdk.frameworks.AppKit
         darwin.apple_sdk.frameworks.Security

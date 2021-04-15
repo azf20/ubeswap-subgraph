@@ -1,37 +1,26 @@
 /* eslint-disable prefer-const */
 import { Address, BigDecimal, BigInt, store } from '@graphprotocol/graph-ts'
 import {
-  Bundle, Burn as BurnEvent, Mint as MintEvent, Pair,
-
-
-
-
-
-  Swap as SwapEvent, Token,
-
-  Transaction, UbeswapFactory
+  Bundle,
+  Burn as BurnEvent,
+  Mint as MintEvent,
+  Pair,
+  Swap as SwapEvent,
+  Token,
+  Transaction,
+  UbeswapFactory
 } from '../types/schema'
 import { Burn, Mint, Pair as PairContract, Swap, Sync, Transfer } from '../types/templates/Pair/Pair'
 import { updatePairDayData, updatePairHourData, updateTokenDayData, updateUbeswapDayData } from './dayUpdates'
 import {
   ADDRESS_ZERO,
-
-
-
-
-
-  BI_18, convertTokenToDecimal,
-
-
-
-
+  BI_18,
+  convertTokenToDecimal,
   createLiquidityPosition,
-
-
-  createLiquiditySnapshot, createUser, FACTORY_ADDRESS,
+  createLiquiditySnapshot,
+  createUser,
+  FACTORY_ADDRESS,
   ONE_BI,
-
-
   ZERO_BD
 } from './helpers'
 import { findUsdPerToken, getCeloPriceInUSD, getTrackedLiquidityUSD, getTrackedVolumeUSD } from './pricing'
@@ -255,14 +244,12 @@ export function handleSync(event: Sync): void {
   token1.save()
 
   // get tracked liquidity - will be 0 if neither is in whitelist
-  let trackedLiquidityUSD: BigDecimal
-  if (bundle.celoPrice.notEqual(ZERO_BD)) {
-    trackedLiquidityUSD = getTrackedLiquidityUSD(pair.reserve0, token0 as Token, pair.reserve1, token1 as Token).div(
-      bundle.celoPrice
-    )
-  } else {
-    trackedLiquidityUSD = ZERO_BD
-  }
+  let trackedLiquidityUSD: BigDecimal = getTrackedLiquidityUSD(
+    pair.reserve0,
+    token0 as Token,
+    pair.reserve1,
+    token1 as Token
+  )
 
   // use derived amounts within pair
   pair.trackedReserveUSD = trackedLiquidityUSD
@@ -314,9 +301,7 @@ export function handleMint(event: Mint): void {
   token1.txCount = token1.txCount.plus(ONE_BI)
 
   // get new amounts of USD and CELO for tracking
-  let amountTotalUSD = token1.derivedCUSD
-    .times(token1Amount)
-    .plus(token0.derivedCUSD.times(token0Amount))
+  let amountTotalUSD = token1.derivedCUSD.times(token1Amount).plus(token0.derivedCUSD.times(token0Amount))
 
   // update txn counts
   pair.txCount = pair.txCount.plus(ONE_BI)
