@@ -5,8 +5,9 @@ import { ADDRESS_ZERO, factoryContract, ONE_BD, ZERO_BD } from './helpers'
 
 const CUSD_CELO_PAIR = '0x1e593f1fe7b61c53874b54ec0c59fd0d5eb8621e' // Created at block 5272605
 export const CELO_ADDRESS = '0x471ece3750da237f93b8e339c536989b8978a438'
-// moola celo dollar
 const MCUSD_ADDRESS = '0x64defa3544c695db8c535d289d843a189aa26b98'
+const MCEUR_ADDRESS = '0xa8d0e6799ff3fd19c6459bf02689ae09c4d78ba7'
+const UBE_ADDRESS = '0x00be915b9dcf56a3cbe739d9b9c202ca692409ec'
 const CUSD_ADDRESS = '0x765de816845861e75a25fca122bb6898b8b1282a'
 const CEUR_ADDRESS = '0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73'
 
@@ -20,7 +21,7 @@ export function getCeloPriceInUSD(): BigDecimal {
 }
 
 // token where amounts should contribute to tracked volume and liquidity
-let WHITELIST: string[] = [CELO_ADDRESS, CUSD_ADDRESS, MCUSD_ADDRESS, CEUR_ADDRESS]
+let WHITELIST: string[] = [CELO_ADDRESS, CUSD_ADDRESS, MCUSD_ADDRESS, CEUR_ADDRESS, MCEUR_ADDRESS, UBE_ADDRESS]
 
 // minimum liquidity required to count towards tracked volume for pairs with small # of Lps
 let MINIMUM_USD_THRESHOLD_NEW_PAIRS = BigDecimal.fromString('10000')

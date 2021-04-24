@@ -5,14 +5,11 @@ import { Bundle, Pair, Token, UbeswapFactory } from '../types/schema'
 import { Pair as PairTemplate } from '../types/templates'
 import {
   FACTORY_ADDRESS,
-
-
-
-
-  fetchTokenDecimals, fetchTokenName, fetchTokenSymbol,
-
-
-  fetchTokenTotalSupply, ZERO_BD,
+  fetchTokenDecimals,
+  fetchTokenName,
+  fetchTokenSymbol,
+  fetchTokenTotalSupply,
+  ZERO_BD,
   ZERO_BI
 } from './helpers'
 
