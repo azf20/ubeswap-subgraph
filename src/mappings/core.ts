@@ -357,11 +357,7 @@ export function handleBurn(event: Burn): void {
   token1.txCount = token1.txCount.plus(ONE_BI)
 
   // get new amounts of USD and CELO for tracking
-  let bundle = Bundle.load('1')
-  let amountTotalUSD = token1.derivedCUSD
-    .times(token1Amount)
-    .plus(token0.derivedCUSD.times(token0Amount))
-    .times(bundle.celoPrice)
+  let amountTotalUSD = token1.derivedCUSD.times(token1Amount).plus(token0.derivedCUSD.times(token0Amount))
 
   // update txn counts
   ubeswap.txCount = ubeswap.txCount.plus(ONE_BI)
