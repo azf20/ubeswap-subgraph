@@ -8,7 +8,8 @@
     "build": "graph build",
     "deploy": "graph deploy ubeswap/ubeswap --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ --debug",
     "deploy-staging": "graph deploy macalinao/ubeswap --ipfs https://api.staging.thegraph.com/ipfs/ --node https://api.staging.thegraph.com/deploy/",
-    "watch-local": "graph deploy ubeswap/ubeswap --watch --debug --node http://127.0.0.1:8020/ --ipfs http://localhost:5001"
+    "watch-local": "graph deploy ubeswap/ubeswap --watch --debug --node http://127.0.0.1:8020/ --ipfs http://localhost:5001",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.16.0",
@@ -17,10 +18,16 @@
     "@typescript-eslint/parser": "^2.0.0",
     "eslint": "^6.2.2",
     "eslint-config-prettier": "^6.1.0",
-    "prettier": "^1.18.2",
+    "husky": ">=6",
+    "lint-staged": ">=10",
+    "prettier": "^2.2.1",
     "typescript": "^3.5.2"
   },
   "files": [
     "schema.graphql"
-  ]
+  ],
+  "lint-staged": {
+    "*.js": "eslint --cache --fix",
+    "*.{js,css,md,ts}": "prettier --write"
+  }
 }
