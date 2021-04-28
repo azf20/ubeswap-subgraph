@@ -84,6 +84,7 @@ export function updatePairHourData(event: EthereumEvent): PairHourData {
   pairHourData.reserve1 = pair.reserve1
   pairHourData.reserveUSD = pair.reserveUSD
   pairHourData.hourlyTxns = pairHourData.hourlyTxns.plus(ONE_BI)
+  pairHourData.totalSupply = pair.totalSupply
   pairHourData.save()
 
   return pairHourData as PairHourData
