@@ -57,6 +57,8 @@ This query fetches aggredated data from all ubeswap pairs and tokens, to give a 
 ```
 
 ## TODOs
+
 In addition to any that might be in the code base:
-  - `package.json` scripts need updated commands
-  - Needs to be tested locally
+
+- `package.json` scripts need updated commands
+- Needs to be tested locally

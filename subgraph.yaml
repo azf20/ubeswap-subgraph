@@ -8,7 +8,7 @@ dataSources:
     name: Factory
     network: celo
     source:
-      address: '0x62d5b84be28a183abb507e125b384122d2c25fae'
+      address: "0x62d5b84be28a183abb507e125b384122d2c25fae"
       abi: Factory
       startBlock: 5272596
     mapping:
