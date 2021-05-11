@@ -86,6 +86,9 @@ export function updatePairHourData(event: EthereumEvent): PairHourData {
     pairHourData.hourlyVolumeToken1 = ZERO_BD;
     pairHourData.hourlyVolumeUSD = ZERO_BD;
     pairHourData.hourlyTxns = ZERO_BI;
+
+    // random line to make a redeploy happen
+    pairHourData.totalSupply = ZERO_BD;
   }
 
   pairHourData.reserve0 = pair.reserve0;
