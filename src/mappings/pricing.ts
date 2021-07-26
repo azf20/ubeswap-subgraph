@@ -5,6 +5,7 @@ import { ADDRESS_ZERO, factoryContract, ONE_BD, ZERO_BD } from "./helpers";
 
 const CUSD_CELO_PAIR = "0x1e593f1fe7b61c53874b54ec0c59fd0d5eb8621e"; // Created at block 5272605
 export const CELO_ADDRESS = "0x471ece3750da237f93b8e339c536989b8978a438";
+const MCELO_ADDRESS = "0x7037f7296b2fc7908de7b57a89efaa8319f0c500";
 const MCUSD_ADDRESS = "0x64defa3544c695db8c535d289d843a189aa26b98";
 const MCEUR_ADDRESS = "0xa8d0e6799ff3fd19c6459bf02689ae09c4d78ba7";
 const UBE_ADDRESS = "0x00be915b9dcf56a3cbe739d9b9c202ca692409ec";
@@ -24,6 +25,7 @@ export function getCeloPriceInUSD(): BigDecimal {
 let WHITELIST: string[] = [
   CELO_ADDRESS,
   CUSD_ADDRESS,
+  MCELO_ADDRESS,
   MCUSD_ADDRESS,
   CEUR_ADDRESS,
   MCEUR_ADDRESS,
