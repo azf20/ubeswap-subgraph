@@ -96,6 +96,11 @@ type Pair @entity {
   swaps: [Swap!]! @derivedFrom(field: "pair")
 }
 
+type PairLookup @entity {
+  id: ID!
+  pairAddress: Pair!
+}
+
 type User @entity {
   id: ID!
   liquidityPositions: [LiquidityPosition!] @derivedFrom(field: "user")

@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts/index";
-import { Pair, Token } from "../types/schema";
+import { Pair, Token, PairLookup } from "../types/schema";
 import { ADDRESS_ZERO, factoryContract, ONE_BD, ZERO_BD } from "./helpers";
 
 const CUSD_CELO_PAIR = "0x1e593f1fe7b61c53874b54ec0c59fd0d5eb8621e"; // Created at block 5272605
@@ -52,12 +52,25 @@ export function findUsdPerToken(token: Token): BigDecimal {
   }
   // loop through whitelist and check if paired with any
   for (let i = 0; i < WHITELIST.length; ++i) {
-    let pairAddress = factoryContract.getPair(
-      Address.fromString(token.id),
-      Address.fromString(WHITELIST[i])
-    );
-    if (pairAddress.toHexString() != ADDRESS_ZERO) {
-      let pair = Pair.load(pairAddress.toHexString());
+    let pairLookup = PairLookup.load(token.id.concat("-").concat(WHITELIST[i]));
+    //    let pairAddress = factoryContract.getPair(
+    //      Address.fromString(token.id),
+    //      Address.fromString(WHITELIST[i])
+    //    );
+    if (pairLookup == null) {
+      let pairAddress = factoryContract.getPair(
+        Address.fromString(token.id),
+        Address.fromString(WHITELIST[i])
+      );
+      if (pairAddress.toHexString() != ADDRESS_ZERO) {
+        pairLookup = new PairLookup(token.id.concat("-").concat(WHITELIST[i]));
+        pairLookup.pairAddress = pairAddress.toHexString();
+        pairLookup.save();
+      }
+    }
+
+    if (pairLookup !== null) {
+      let pair = Pair.load(pairLookup.pairAddress);
       if (
         pair.token0 == token.id &&
         pair.reserveUSD.gt(MINIMUM_LIQUIDITY_THRESHOLD_CUSD)

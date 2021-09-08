@@ -3,7 +3,7 @@ import {
   Address,
   BigDecimal,
   BigInt,
-  EthereumEvent,
+  ethereum,
   log,
 } from "@graphprotocol/graph-ts";
 import { ERC20 } from "../types/Factory/ERC20";
@@ -188,7 +188,7 @@ export function createUser(address: Address): void {
 
 export function createLiquiditySnapshot(
   position: LiquidityPosition,
-  event: EthereumEvent
+  event: ethereum.Event
 ): void {
   let timestamp = event.block.timestamp.toI32();
   let pair = Pair.load(position.pair);

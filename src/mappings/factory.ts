@@ -1,7 +1,13 @@
 /* eslint-disable prefer-const */
 import { log } from "@graphprotocol/graph-ts";
 import { PairCreated } from "../types/Factory/Factory";
-import { Bundle, Pair, Token, UbeswapFactory } from "../types/schema";
+import {
+  Bundle,
+  Pair,
+  Token,
+  UbeswapFactory,
+  PairLookup,
+} from "../types/schema";
 import { Pair as PairTemplate } from "../types/templates";
 import {
   FACTORY_ADDRESS,
@@ -103,6 +109,12 @@ export function handleNewPair(event: PairCreated): void {
   pair.token0Price = ZERO_BD;
   pair.token1Price = ZERO_BD;
 
+  let pairLookup0 = new PairLookup(token0.id.concat("-").concat(token1.id));
+  pairLookup0.pairAddress = event.params.pair.toHexString();
+
+  let pairLookup1 = new PairLookup(token1.id.concat("-").concat(token0.id));
+  pairLookup1.pairAddress = event.params.pair.toHexString();
+
   // create the tracked contract based on the template
   PairTemplate.create(event.params.pair);
 
@@ -111,4 +123,6 @@ export function handleNewPair(event: PairCreated): void {
   token1.save();
   pair.save();
   factory.save();
+  pairLookup0.save();
+  pairLookup1.save();
 }

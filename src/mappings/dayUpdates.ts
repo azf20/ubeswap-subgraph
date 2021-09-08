@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */
-import { BigDecimal, BigInt, EthereumEvent } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
   Bundle,
   Pair,
@@ -12,7 +12,7 @@ import {
 import { PairHourData } from "./../types/schema";
 import { FACTORY_ADDRESS, ONE_BD, ONE_BI, ZERO_BD, ZERO_BI } from "./helpers";
 
-export function updateUbeswapDayData(event: EthereumEvent): UbeswapDayData {
+export function updateUbeswapDayData(event: ethereum.Event): UbeswapDayData {
   let ubeswap = UbeswapFactory.load(FACTORY_ADDRESS);
   let timestamp = event.block.timestamp.toI32();
   let dayID = timestamp / 86400;
@@ -36,7 +36,7 @@ export function updateUbeswapDayData(event: EthereumEvent): UbeswapDayData {
   return ubeswapDayData as UbeswapDayData;
 }
 
-export function updatePairDayData(event: EthereumEvent): PairDayData {
+export function updatePairDayData(event: ethereum.Event): PairDayData {
   let timestamp = event.block.timestamp.toI32();
   let dayID = timestamp / 86400;
   let dayStartTimestamp = dayID * 86400;
@@ -68,7 +68,7 @@ export function updatePairDayData(event: EthereumEvent): PairDayData {
   return pairDayData as PairDayData;
 }
 
-export function updatePairHourData(event: EthereumEvent): PairHourData {
+export function updatePairHourData(event: ethereum.Event): PairHourData {
   let timestamp = event.block.timestamp.toI32();
   let hourIndex = timestamp / 3600; // get unique hour within unix history
   let hourStartUnix = hourIndex * 3600; // want the rounded effect
@@ -104,7 +104,7 @@ export function updatePairHourData(event: EthereumEvent): PairHourData {
 
 export function updateTokenDayData(
   token: Token,
-  event: EthereumEvent
+  event: ethereum.Event
 ): TokenDayData {
   let bundle = Bundle.load("1");
   let timestamp = event.block.timestamp.toI32();
