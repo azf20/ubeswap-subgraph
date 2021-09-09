@@ -3,7 +3,7 @@ description: Ubeswap is a decentralized protocol for automated token exchange on
 repository: https://github.com/Ubeswap/ubeswap-subgraph
 graft:
   base: QmfBk9EPNaW1DSj3r2JUnpFDyWw6m5d9oB2inJgnyxpp4h
-  block: 8680623 # Block number
+  block: 8687182 # Block number
 schema:
   file: ./schema.graphql
 dataSources:

@@ -62,14 +62,12 @@ export function findUsdPerToken(token: Token): BigDecimal {
         Address.fromString(token.id),
         Address.fromString(WHITELIST[i])
       );
-      if (pairAddress.toHexString() != ADDRESS_ZERO) {
-        pairLookup = new PairLookup(token.id.concat("-").concat(WHITELIST[i]));
-        pairLookup.pairAddress = pairAddress.toHexString();
-        pairLookup.save();
-      }
+      pairLookup = new PairLookup(token.id.concat("-").concat(WHITELIST[i]));
+      pairLookup.pairAddress = pairAddress.toHexString();
+      pairLookup.save();
     }
 
-    if (pairLookup !== null) {
+    if (pairLookup !== null && pairLookup.pairAddress != ADDRESS_ZERO) {
       let pair = Pair.load(pairLookup.pairAddress);
       if (
         pair.token0 == token.id &&

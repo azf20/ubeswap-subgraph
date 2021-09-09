@@ -6,7 +6,7 @@
   "scripts": {
     "codegen": "graph codegen --output-dir src/types/",
     "build": "graph build",
-    "deploy": "export $(cat .env) && graph deploy azf20/testing-again --access-token 537a105a94d3439986fd66564f345f5e --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ --debug",
+    "deploy": "export $(cat .env) && graph deploy azf20/testing-the-third --access-token 537a105a94d3439986fd66564f345f5e --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ --debug",
     "deploy:backup": "export $(cat .env) && graph deploy ubeswap/ubeswap-backup --access-token \"$GRAPH_ACCESS_TOKEN\" --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ --debug",
     "deploy-staging": "graph deploy macalinao/ubeswap --ipfs https://api.staging.thegraph.com/ipfs/ --node https://api.staging.thegraph.com/deploy/",
     "watch-local": "graph deploy ubeswap/ubeswap --watch --debug --node http://127.0.0.1:8020/ --ipfs http://localhost:5001",
