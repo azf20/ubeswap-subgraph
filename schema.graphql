@@ -299,3 +299,8 @@ type TokenDayData @entity {
   # price stats
   priceUSD: BigDecimal!
 }
+
+type PairLookup @entity {
+  id: ID!
+  pairAddress: Pair!
+}

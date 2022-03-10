@@ -1,7 +1,16 @@
 /* eslint-disable prefer-const */
-import { Pair, Token, Bundle } from '../types/schema'
+import { Pair, Token, Bundle, PairLookup } from '../types/schema'
 import { BigDecimal, Address, BigInt, Bytes } from '@graphprotocol/graph-ts/index'
-import { ZERO_BD, factoryContract, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS, loadBundle, usdPrice, ethAmount } from './helpers'
+import {
+  ZERO_BD,
+  factoryContract,
+  ADDRESS_ZERO,
+  ONE_BD,
+  UNTRACKED_PAIRS,
+  loadBundle,
+  usdPrice,
+  ethAmount
+} from './helpers'
 
 const WETH_ADDRESS = Bytes.fromHexString('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
 const USDC_WETH_PAIR = Bytes.fromHexString('0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc') // created 10008355
@@ -83,9 +92,14 @@ export function findEthPerToken(token: Token): BigDecimal {
   let tokenAddr = Address.fromBytes(token.id)
   // loop through whitelist and check if paired with any
   for (let i = 0; i < WHITELIST.length; ++i) {
-    let pairAddress = factoryContract.getPair(tokenAddr, WHITELIST_ADDR[i])
-    if (pairAddress != ADDRESS_ZERO) {
-      let pair = Pair.load(pairAddress)
+    let pairLookup = PairLookup.load(
+      token.id
+        .toHexString()
+        .concat('-')
+        .concat(WHITELIST[i].toHexString())
+    )
+    if (pairLookup !== null && pairLookup.pairAddress != ADDRESS_ZERO) {
+      let pair = Pair.load(pairLookup.pairAddress)
       // If we don't know this pair, don't fail the subgraph
       if (pair) {
         if (pair.token0 == token.id && pair.reserveETH.gt(MINIMUM_LIQUIDITY_THRESHOLD_ETH)) {

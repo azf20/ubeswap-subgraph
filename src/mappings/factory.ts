@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */
 import { log } from '@graphprotocol/graph-ts'
 import { PairCreated } from '../types/Factory/Factory'
-import { Bundle, Pair, Token, UniswapFactory } from '../types/schema'
+import { Bundle, Pair, Token, UniswapFactory, PairLookup } from '../types/schema'
 import { Pair as PairTemplate } from '../types/templates'
 import {
   BUNDLE_ID,
@@ -11,7 +11,7 @@ import {
   fetchTokenSymbol,
   fetchTokenTotalSupply,
   ZERO_BD,
-  ZERO_BI,
+  ZERO_BI
 } from './helpers'
 
 export function handleNewPair(event: PairCreated): void {
@@ -105,6 +105,22 @@ export function handleNewPair(event: PairCreated): void {
   pair.token0Price = ZERO_BD
   pair.token1Price = ZERO_BD
 
+  let pairLookup0 = new PairLookup(
+    token0.id
+      .toHexString()
+      .concat('-')
+      .concat(token1.id.toHexString())
+  )
+  pairLookup0.pairAddress = event.params.pair
+
+  let pairLookup1 = new PairLookup(
+    token1.id
+      .toHexString()
+      .concat('-')
+      .concat(token0.id.toHexString())
+  )
+  pairLookup1.pairAddress = event.params.pair
+
   // create the tracked contract based on the template
   PairTemplate.create(event.params.pair)
 
@@ -113,4 +129,6 @@ export function handleNewPair(event: PairCreated): void {
   token1.save()
   pair.save()
   factory.save()
+  pairLookup0.save()
+  pairLookup1.save()
 }
